@@ -7,10 +7,10 @@
 
 [![GitHub Repo stars](https://img.shields.io/github/stars/flowerime/lilac)](https://github.com/flowerime/lilac/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/flowerime/lilac)](https://github.com/flowerime/lilac/network/members)
-<!-- [![GitHub release (latest by date)](https://img.shields.io/github/v/release/flowerime/lilac)](https://github.com/flowerime/lilac/releases) -->
-<!-- [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/flowerime/lilac/build.yml)](https://github.com/flowerime/lilac/actions/workflows/build.yml) -->
 ![GitHub repo size](https://img.shields.io/github/repo-size/flowerime/lilac)
 ![GitHub](https://img.shields.io/github/license/flowerime/lilac)
+<!-- [![GitHub release (latest by date)](https://img.shields.io/github/v/release/flowerime/lilac)](https://github.com/flowerime/lilac/releases) -->
+<!-- [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/flowerime/lilac/build.yml)](https://github.com/flowerime/lilac/actions/workflows/build.yml) -->
 
 </div>
 
