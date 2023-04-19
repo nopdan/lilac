@@ -1,4 +1,4 @@
-package encoder
+package shorten
 
 import (
 	"strconv"
@@ -7,7 +7,7 @@ import (
 	"github.com/flowerime/rose/pkg/rose"
 )
 
-// rule 1:0,2:3,3:2,6:n 默认1，n 无限
+// rule 1:0,2:3,3:2,6: 默认1，空无限
 func Shorten(table *rose.WubiTable, rule string) {
 	rl := parseRule(rule)
 	countMap := make(map[string]int)
@@ -43,7 +43,7 @@ func parseRule(rule string) []int {
 			continue
 		}
 		var val int
-		if tmp[1] == "n" {
+		if tmp[1] == "" {
 			val = 1e5
 		} else {
 			val, _ = strconv.Atoi(tmp[1])

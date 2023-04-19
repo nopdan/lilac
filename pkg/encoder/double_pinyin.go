@@ -1,4 +1,4 @@
-package double
+package encoder
 
 import (
 	"fmt"

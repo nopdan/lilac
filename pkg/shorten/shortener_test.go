@@ -1,4 +1,4 @@
-package encoder
+package shorten
 
 import (
 	"bufio"
@@ -26,7 +26,7 @@ func TestShorten(t *testing.T) {
 			Code: entry[1],
 		})
 	}
-	Shorten(&wct, "1:3,2:2,4:n")
+	Shorten(&wct, "1:3,2:2,4:")
 
 	var buf bytes.Buffer
 	for _, v := range wct {
@@ -35,5 +35,5 @@ func TestShorten(t *testing.T) {
 		buf.WriteString(v.Code)
 		buf.WriteByte('\n')
 	}
-	os.WriteFile("own/test_shorten.txt", buf.Bytes(), 0666)
+	os.WriteFile("../../test_shorten.txt", buf.Bytes(), 0666)
 }
