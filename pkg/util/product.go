@@ -18,6 +18,9 @@ func Product[T any](sli [][]T) [][]T {
 
 // [[a],[b]],[c]->[[a,c],[b,c]]
 func product[T any](sli [][]T, curr []T) [][]T {
+	if len(curr) == 0 {
+		return sli
+	}
 	ret := make([][]T, 0, len(sli)*len(curr))
 	for i := 0; i < len(sli); i++ {
 		for j := 0; j < len(curr); j++ {
