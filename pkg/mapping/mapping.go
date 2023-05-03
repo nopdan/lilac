@@ -82,12 +82,9 @@ func (s *Mapping) FromYinjie(yinjie string) []string {
 
 	smKeys := s.Sm_ym[sm]
 	ymKeys := s.Sm_ym[ym]
-	var keys [][]byte
-	if len(ymKeys) == 0 {
-		keys = [][]byte{smKeys}
-	} else {
-		keys = util.Product([][]byte{smKeys, ymKeys})
-	}
+	keys := util.Product([][]byte{smKeys, ymKeys})
+	// fmt.Println(sm, smKeys, ym, ymKeys, keys)
+
 	ret := make([]string, len(keys))
 	for i, v := range keys {
 		ret[i] = string(v)

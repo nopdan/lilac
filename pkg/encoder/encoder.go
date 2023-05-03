@@ -67,8 +67,9 @@ func (e *Encoder) Encode(word string, pinyin []string) []string {
 		one := e.encodeOne(chars, pycode, rl)
 		ret = append(ret, one...)
 	}
+	ret = util.RmRepeat(ret)
 	fmt.Printf("? 词组: %v, 拼音: %v, 转换后: %v, 生成: %v\n", word, pinyin, pycodes, ret)
-	return util.RmRepeat(ret)
+	return ret
 }
 
 // 一组拼音生成的编码
@@ -95,7 +96,7 @@ func (e *Encoder) encodeOne(chars []rune, pycode []string, rl []rule) []string {
 			var err error
 			codes, err = cut(codes, r.idxCode)
 			if err != nil {
-				fmt.Println("编码错误", string(chars), pycode)
+				fmt.Println(err, "编码错误", string(chars), pycode)
 				continue
 			}
 		}
