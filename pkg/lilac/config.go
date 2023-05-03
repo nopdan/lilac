@@ -23,8 +23,6 @@ type Config struct {
 	Rule string `ini:"Rule"`
 
 	Correct map[string][]string
-	Char    map[string][]string
-	Mapping *m.Mapping
 
 	Dict    string
 	encoder *encoder.Encoder
@@ -60,6 +58,7 @@ func NewConfig(path string) *Config {
 	}
 
 	c.Dict = cfg.Section("Dict").Body()
+	fmt.Printf("c: %+v\n", c)
 	return c
 }
 
@@ -68,15 +67,28 @@ func (c *Config) Do() [][]string {
 	rd := strings.NewReader(c.Dict)
 	scan := bufio.NewScanner(rd)
 	ret := make([][]string, 0)
+	ret = c.do(scan, ret, false)
+	return ret
+}
+
+// 递归
+func (c *Config) do(scan *bufio.Scanner, ret [][]string, flag bool) [][]string {
 	for scan.Scan() {
 		line := scan.Text()
-		tmp := strings.Split(line, "\t")
+		if sc, newFlag, err := include(line); err == nil {
+			ret = c.do(sc, ret, newFlag)
+			continue
+		}
 
+		tmp := strings.Split(line, "\t")
 		word, ok := strings.CutPrefix(tmp[0], "?")
+		if flag {
+			ok = true
+		}
 		entry := []string{word}
 		if len(tmp) == 1 {
 			gen := c.encoder.Encode(word, []string{})
-			fmt.Printf("? 词组: %v, 生成: %v\n", word, gen)
+			// fmt.Printf("? 词组: %v, 生成: %v\n", word, gen)
 			entry = append(entry, gen...)
 			ret = append(ret, entry)
 			continue
@@ -90,7 +102,7 @@ func (c *Config) Do() [][]string {
 			// ? 号开头为自动造词
 			py := strings.Split(tmp[1], " ")
 			gen := c.encoder.Encode(word, py)
-			fmt.Printf("? 词组: %v, 拼音: %v, 生成: %v\n", word, py, gen)
+			// fmt.Printf("? 词组: %v, 拼音: %v, 生成: %v\n", word, py, gen)
 			entry = append(entry, gen...)
 			ret = append(ret, entry)
 		} else {

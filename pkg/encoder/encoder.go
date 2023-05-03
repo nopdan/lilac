@@ -39,8 +39,8 @@ func (e *Encoder) Encode(word string, pinyin []string) []string {
 		// 单字规则
 		if length == 1 {
 			rl = []rule{
-				{isYin: true, idxChar: 1, idxCode: 0},  // 音部分
-				{isYin: false, idxChar: 1, idxCode: 0}, // 形部分
+				{isYin: true, idxChar: 0, idxCode: 0},  // 音部分
+				{isYin: false, idxChar: 0, idxCode: 0}, // 形部分
 			}
 		}
 	}
@@ -67,25 +67,29 @@ func (e *Encoder) Encode(word string, pinyin []string) []string {
 		one := e.encodeOne(chars, pycode, rl)
 		ret = append(ret, one...)
 	}
-	// fmt.Printf("? 词组: %v, 生成: %v\n", word, ret)
+	fmt.Printf("? 词组: %v, 拼音: %v, 转换后: %v, 生成: %v\n", word, pinyin, pycodes, ret)
 	return util.RmRepeat(ret)
 }
 
 // 一组拼音生成的编码
 func (e *Encoder) encodeOne(chars []rune, pycode []string, rl []rule) []string {
-	//
+	// fmt.Printf("rl: %v\n", rl)
 	tmp := make([][]string, 0)
 	for _, r := range rl {
+		idx := r.idxChar
 		var codes []string
 		if r.isYin {
-			codes = pycode
+			if idx == -1 {
+				idx = len(pycode) - 1
+			}
+			codes = []string{pycode[idx]}
 		} else {
-			idx := r.idxChar
 			if idx == -1 {
 				idx = len(chars) - 1
 			}
 			codes = e.Char[string(chars[idx])]
 		}
+		// fmt.Printf("codes: %v\n", codes)
 		// 等于 0 时取全部编码
 		if r.idxCode != 0 {
 			var err error

@@ -17,8 +17,9 @@ func handleText(text string) map[string][]string {
 func handle(scan *bufio.Scanner, ret map[string][]string) {
 	for scan.Scan() {
 		line := scan.Text()
-		if sc, err := include(line); err == nil {
+		if sc, _, err := include(line); err == nil {
 			handle(sc, ret)
+			continue
 		}
 		tmp := strings.Split(line, "\t")
 		if len(tmp) != 2 {
