@@ -4,13 +4,26 @@ import (
 	"bufio"
 	"fmt"
 	"strings"
+	"unicode"
+	"unicode/utf8"
 )
 
 func (c *config) runCheck(scan *bufio.Scanner) {
+	dict := make(map[string][]string)
+	readCheck(scan, dict)
+	for word, codes := range dict {
+		gen := c.encoder.Encode(word, []string{})
+		if !contains(gen, codes) {
+			fmt.Printf("Check Error! 词组: %v %v\t生成: %v\n", word, codes, gen)
+		}
+	}
+}
+
+func readCheck(scan *bufio.Scanner, ret map[string][]string) {
 	for scan.Scan() {
 		line := scan.Text()
 		if sc, _, err := include(line); err == nil {
-			c.runCheck(sc)
+			readCheck(sc, ret)
 			continue
 		}
 		tmp := strings.Split(line, "\t")
@@ -18,15 +31,18 @@ func (c *config) runCheck(scan *bufio.Scanner) {
 			continue
 		}
 		word, code := tmp[0], tmp[1]
-		pinyin := []string{}
-		if len(tmp) == 3 {
-			py := tmp[2]
-			pinyin = strings.Split(py, " ")
+		// 忽略单字
+		if utf8.RuneCountInString(word) == 1 {
+			continue
 		}
-		codes := c.encoder.Encode(word, pinyin)
-		if !contain(code, codes) {
-			fmt.Printf("编码错误！词组: %v 编码: %v 可能的正确编码: %v\n", word, code, codes)
+		// 忽略包含非汉字
+		if !isHan(word) {
+			continue
 		}
+		if _, ok := ret[word]; !ok {
+			ret[word] = make([]string, 0)
+		}
+		ret[word] = append(ret[word], code)
 	}
 }
 
@@ -37,4 +53,24 @@ func contain(code string, codes []string) bool {
 		}
 	}
 	return false
+}
+
+func contains(gen []string, codes []string) bool {
+	flag := false
+	for _, code := range gen {
+		if contain(code, codes) {
+			flag = true
+		}
+	}
+	return flag
+}
+
+func isHan(word string) bool {
+	flag := true
+	for _, r := range word {
+		if !unicode.Is(unicode.Han, r) {
+			flag = false
+		}
+	}
+	return flag
 }
