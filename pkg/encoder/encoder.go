@@ -7,7 +7,7 @@ import (
 
 	m "github.com/flowerime/lilac/pkg/mapping"
 	"github.com/flowerime/lilac/pkg/util"
-	"github.com/flowerime/rose/pkg/zhuyin"
+	"github.com/flowerime/pinyin"
 )
 
 type Encoder struct {
@@ -17,12 +17,14 @@ type Encoder struct {
 	sRule   rule // 特殊规则 ab++
 	Char    map[string][]string
 	Mapping *m.Mapping
+	py      *pinyin.Pinyin
 }
 
 func NewEncoder(rules string) *Encoder {
 	e := new(Encoder)
 	e.Rule = make(map[int][]rule)
 	e.initRule(rules)
+	e.py = pinyin.New()
 	return e
 }
 
@@ -63,7 +65,8 @@ func (e *Encoder) Encode(word string, pinyin []string) []string {
 	var pycodes [][]string
 	// 词库中没有拼音，需要自动注音
 	if len(pinyin) == 0 {
-		pinyin = zhuyin.Get(word)
+		pinyin = e.py.Match(word)
+		// fmt.Println(word, pinyin)
 	}
 	// zhi shi => [[ai ui], [ai vi], [ei ui], [ei vi]]
 	pycodes = e.Mapping.FromPinyin(pinyin)

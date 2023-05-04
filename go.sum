@@ -3,6 +3,8 @@ github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/flowerime/goutil v0.2.2 h1:teAE8BSB+PI0wCX+4n5W7ErTWTHThac98JjQ2LZN0h8=
 github.com/flowerime/goutil v0.2.2/go.mod h1:UFcJNB+mJSFg5OhAgc3Ct0Wy8narM8cEmoWVnMECDhk=
+github.com/flowerime/pinyin v0.2.0 h1:k09zoZUICh82RT83bUilo1ZDWaTLyVDut7SmYn/spak=
+github.com/flowerime/pinyin v0.2.0/go.mod h1:r3jpJfaZznJNh1kITA2Vrl33lz8EvoFMuXRurj+wNjg=
 github.com/flowerime/rose v1.1.0 h1:e3HjdwP28RbFyNBFWC04Fl8zIlnvty7P9+w8uAffUsQ=
 github.com/flowerime/rose v1.1.0/go.mod h1:yr+41kRPzPWmXPwNskkG1LEoA6fv2hKY5Hoa+jGT57w=
 github.com/gogs/chardet v0.0.0-20211120154057-b7413eaefb8f h1:3BSP1Tbs2djlpprl7wCLuiqMaUh5SJkkzI2gDs+FgLs=
