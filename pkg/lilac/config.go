@@ -12,7 +12,6 @@ import (
 )
 
 type config struct {
-	Type int    `ini:"Type"`
 	Rule string `ini:"Rule"`
 	Sort int    `ini:"Sort"`
 
