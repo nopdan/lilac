@@ -11,6 +11,8 @@ import (
 )
 
 type Encoder struct {
+	Correct map[string][]string
+
 	Rule    map[int][]rule
 	sRule   rule // 特殊规则 ab++
 	Char    map[string][]string
@@ -26,6 +28,10 @@ func NewEncoder(rules string) *Encoder {
 
 // pinyin is not required
 func (e *Encoder) Encode(word string, pinyin []string) []string {
+	if codes, ok := e.Correct[word]; ok {
+		return codes
+	}
+
 	chars := []rune(word)
 	length := len(chars)
 	if length == 0 {
@@ -48,7 +54,7 @@ func (e *Encoder) Encode(word string, pinyin []string) []string {
 	// 形码用不到音
 	if e.Mapping == nil {
 		one := e.encodeOne(chars, []string{}, rl)
-		fmt.Printf("? 词组: %v, 生成: %v\n", word, one)
+		// fmt.Printf("? 词组: %v, 生成: %v\n", word, one)
 		return one
 	}
 
@@ -68,7 +74,7 @@ func (e *Encoder) Encode(word string, pinyin []string) []string {
 		ret = append(ret, one...)
 	}
 	ret = util.RmRepeat(ret)
-	fmt.Printf("? 词组: %v, 拼音: %v, 转换后: %v, 生成: %v\n", word, pinyin, pycodes, ret)
+	// fmt.Printf("? 词组: %v, 拼音: %v, 转换后: %v, 生成: %v\n", word, pinyin, pycodes, ret)
 	return ret
 }
 

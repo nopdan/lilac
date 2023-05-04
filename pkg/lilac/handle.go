@@ -5,7 +5,8 @@ import (
 	"strings"
 )
 
-func handleText(text string) map[string][]string {
+// 读取tsv码表
+func HandleText(text string) map[string][]string {
 	ret := make(map[string][]string)
 	rd := strings.NewReader(text)
 	scan := bufio.NewScanner(rd)

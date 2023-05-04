@@ -3,6 +3,7 @@ package lilac
 import (
 	"bufio"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/flowerime/lilac/pkg/encoder"
@@ -10,25 +11,16 @@ import (
 	"gopkg.in/ini.v1"
 )
 
-type Config struct {
-	// Zcgz     string `ini:"组词规则"`
-	// Jmgz     string `ini:"简码规则"`
-	// Scjm     int    `ini:"生成简码"`
-	// Bldzqm   int    `ini:"保留单字全码"`
-	// Blczqm   int    `ini:"保留词组全码"`
-	// Sort     int    `ini:"重新按字母排序"`
-	// External string `ini:"使用单独的码表造词"`
-
+type config struct {
 	Type int    `ini:"Type"`
 	Rule string `ini:"Rule"`
+	Sort int    `ini:"Sort"`
 
-	Correct map[string][]string
-
-	Dict    string
+	dict    string
 	encoder *encoder.Encoder
 }
 
-func NewConfig(path string) *Config {
+func newConfig(path string) *config {
 	// 手动解析下列 Section
 	cfg, err := ini.LoadSources(ini.LoadOptions{
 		UnparseableSections: []string{"Dict", "Correct", "Char", "Mapping"},
@@ -37,7 +29,7 @@ func NewConfig(path string) *Config {
 		panic(err)
 	}
 
-	c := new(Config)
+	c := new(config)
 	config := cfg.Section("Config")
 	err = config.MapTo(c)
 	if err != nil {
@@ -45,38 +37,47 @@ func NewConfig(path string) *Config {
 	}
 
 	var text string
+
+	enc := encoder.NewEncoder(c.Rule)
 	text = cfg.Section("Correct").Body()
-	c.Correct = handleText(text)
-
-	c.encoder = encoder.NewEncoder(c.Rule)
+	enc.Correct = HandleText(text)
 	text = cfg.Section("Char").Body()
-	c.encoder.Char = handleText(text)
+	enc.Char = HandleText(text)
 	text = cfg.Section("Mapping").Body()
-	data := handleText(text)
+	data := HandleText(text)
 	if len(data) != 0 {
-		c.encoder.Mapping = m.NewMapping(data)
+		enc.Mapping = m.NewMapping(data)
 	}
+	c.encoder = enc
 
-	c.Dict = cfg.Section("Dict").Body()
+	c.dict = cfg.Section("Dict").Body()
 	fmt.Printf("c: %+v\n", c)
 	return c
 }
 
 // 生成码表
-func (c *Config) Do() [][]string {
-	rd := strings.NewReader(c.Dict)
+func Generate(path string) [][]string {
+	c := newConfig(path)
+
+	rd := strings.NewReader(c.dict)
 	scan := bufio.NewScanner(rd)
 	ret := make([][]string, 0)
-	ret = c.do(scan, ret, false)
+	ret = c.run(scan, ret, false)
+
+	if c.Sort == 1 {
+		sort.SliceStable(ret, func(i, j int) bool {
+			return ret[i][1] < ret[j][1]
+		})
+	}
 	return ret
 }
 
 // 递归
-func (c *Config) do(scan *bufio.Scanner, ret [][]string, flag bool) [][]string {
+func (c *config) run(scan *bufio.Scanner, ret [][]string, flag bool) [][]string {
 	for scan.Scan() {
 		line := scan.Text()
 		if sc, newFlag, err := include(line); err == nil {
-			ret = c.do(sc, ret, newFlag)
+			ret = c.run(sc, ret, newFlag)
 			continue
 		}
 
@@ -90,7 +91,7 @@ func (c *Config) do(scan *bufio.Scanner, ret [][]string, flag bool) [][]string {
 			gen := c.encoder.Encode(word, []string{})
 			// fmt.Printf("? 词组: %v, 生成: %v\n", word, gen)
 			entry = append(entry, gen...)
-			ret = append(ret, entry)
+			ret = append(ret, flat(entry)...)
 			continue
 		}
 
@@ -104,7 +105,7 @@ func (c *Config) do(scan *bufio.Scanner, ret [][]string, flag bool) [][]string {
 			gen := c.encoder.Encode(word, py)
 			// fmt.Printf("? 词组: %v, 拼音: %v, 生成: %v\n", word, py, gen)
 			entry = append(entry, gen...)
-			ret = append(ret, entry)
+			ret = append(ret, flat(entry)...)
 		} else {
 			fmt.Println("错误:", line)
 		}
@@ -112,92 +113,15 @@ func (c *Config) do(scan *bufio.Scanner, ret [][]string, flag bool) [][]string {
 	return ret
 }
 
-// func (c *Config) handleData() {
-// 	c.data = make([][]string, 0, len(c.Dict)/8)
-// 	c.goucima = make(map[rune][]string)
-
-// 	rd := strings.NewReader(c.Dict)
-// 	scan := bufio.NewScanner(rd)
-
-// 	// 单独的单字码表
-// 	if c.External != "" {
-// 		extRd, err := util.Read(c.External)
-// 		if err != nil {
-// 			panic(err)
-// 		}
-// 		extScan := bufio.NewScanner(extRd)
-// 		for extScan.Scan() {
-// 			tmp := strings.Split(extScan.Text(), "\t")
-// 			if len(tmp) != 2 {
-// 				continue
-// 			}
-// 			chars := []rune(tmp[0])
-// 			if len(chars) != 1 {
-// 				continue
-// 			}
-// 			c.appendGoucima(chars[0], tmp[1])
-// 		}
-// 		for scan.Scan() {
-// 			tmp := strings.Split(scan.Text(), "\t")
-// 			if len(tmp) == 0 {
-// 				continue
-// 			}
-// 			c.data = append(c.data, tmp)
-// 		}
-// 	}
-
-// 	for scan.Scan() {
-// 		tmp := strings.Split(scan.Text(), "\t")
-// 		if len(tmp) == 0 {
-// 			continue
-// 		}
-// 		var char rune
-// 		if len(tmp[0]) <= 5 {
-// 			chars := []rune(tmp[0])
-// 			if len(chars) == 1 {
-// 				char = chars[0]
-// 			}
-// 		}
-// 		if char != 0 {
-// 			if len(tmp) == 2 {
-// 				c.appendGoucima(char, tmp[1])
-// 			}
-// 			if len(tmp) == 3 {
-// 				c.appendGoucima(char, tmp[2])
-// 			}
-// 		}
-// 		c.data = append(c.data, tmp)
-// 	}
-// }
-
-// func (c *Config) appendGoucima(char rune, code string) {
-// 	if _, ok := c.goucima[char]; ok {
-// 		c.goucima[char] = append(c.goucima[char], code)
-// 	} else {
-// 		c.goucima[char] = []string{code}
-// 	}
-// }
-
-// func (c *Config) getDzmb() map[rune][]string {
-
-// 	dzmb := make(map[rune][]string)
-// 	b := strings.NewReader(c.Dict)
-// 	scan := bufio.NewScanner(b)
-// 	for scan.Scan() {
-// 		entry := strings.Split(scan.Text(), "\t")
-// 		if len(entry) != 2 {
-// 			continue
-// 		}
-// 		tmp := []rune(entry[0])
-// 		if len(tmp) > 1 {
-// 			continue
-// 		}
-// 		dz := tmp[0]
-// 		if _, ok := dzmb[dz]; !ok {
-// 			dzmb[dz] = []string{entry[1]}
-// 			continue
-// 		}
-// 		dzmb[dz] = append(dzmb[dz], entry[1])
-// 	}
-// 	return dzmb
-// }
+// 展开一词多编码
+func flat(entry []string) [][]string {
+	if len(entry) <= 2 {
+		return [][]string{entry}
+	}
+	ret := make([][]string, 0, len(entry)-1)
+	for i := 1; i < len(entry); i++ {
+		ret = append(ret, []string{entry[0], entry[i]})
+	}
+	// fmt.Println(entry, ret)
+	return ret
+}

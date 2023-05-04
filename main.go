@@ -14,9 +14,6 @@ func main() {
 	input := args[1]
 	output := args[2]
 
-	c := lilac.NewConfig(input)
-	dict := c.Do()
-	data := c.Write(dict)
-
-	os.WriteFile(output, data, 0666)
+	dict := lilac.Generate(input)
+	lilac.WriteFile(dict, output)
 }
