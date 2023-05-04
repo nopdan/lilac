@@ -25,40 +25,43 @@ type rule struct {
 // 解析规则
 func (e *Encoder) initRule(rules string) {
 	rules = TrimSpace(rules)
-	ruleSli := strings.Split(rules, ",")
-	fmt.Println(ruleSli)
+	lines := strings.Split(rules, ",")
+	fmt.Println(lines)
 
-	// 处理特殊规则 ab++
-	if len(ruleSli) == 1 {
-		if r, ok := strings.CutSuffix(ruleSli[0], "++"); ok {
-			e.sRule = parseRule(r)
-			return
-		}
+	// 处理特殊规则 a1+a2..
+	special := false
+	if len(lines) == 1 {
+		lines[0], special = strings.CutSuffix(lines[0], "..")
 	}
-	for _, r := range ruleSli {
-		tmp := strings.Split(r, ":")
-		if len(tmp) != 2 {
-			fmt.Printf("规则解析错误: %v\n", rules)
+	for _, line := range lines {
+		tmp := strings.Split(line, ":")
+		if len(tmp) == 1 {
+			// 没有 : 特殊规则
+			if special {
+				e.sRule = parse(line)
+				return
+			}
+			fmt.Printf("规则解析错误: %v, line: %v\n", rules, line)
 			panic("")
 		}
 		// 冒号前面表示词长
-		length := len(tmp[0])
-		if length != 0 {
-			var err error
-			length, err = strconv.Atoi(tmp[0])
-			if err != nil {
-				fmt.Printf("规则解析错误: %v\n", rules)
-				panic(err)
-			}
+		length, err := strconv.Atoi(tmp[0])
+		if len(tmp) != 2 || err != nil && tmp[0] != "" {
+			fmt.Printf("规则解析错误: %v, line: %v\n", rules, line)
+			panic(err)
 		}
-		// A+B+a1+b1
-		tmp = strings.Split(tmp[1], "+")
-		rl := make([]rule, len(tmp))
-		for i, v := range tmp {
-			rl[i] = parseRule(v)
-		}
-		e.Rule[length] = rl
+		e.Rule[length] = parse(tmp[1])
 	}
+}
+
+// 解析规则 A+a+A2+a11
+func parse(r string) []rule {
+	tmp := strings.Split(r, "+")
+	rl := make([]rule, len(tmp))
+	for i, v := range tmp {
+		rl[i] = parseRule(v)
+	}
+	return rl
 }
 
 // 解析规则 A a A2 a11

@@ -14,7 +14,7 @@ type Encoder struct {
 	Correct map[string][]string
 
 	Rule    map[int][]rule
-	sRule   rule // 特殊规则 ab++
+	sRule   []rule // 特殊规则 a1+a2..
 	Char    map[string][]string
 	Mapping *m.Mapping
 	py      *pinyin.Pinyin
@@ -30,28 +30,15 @@ func NewEncoder(rules string) *Encoder {
 
 // pinyin is not required
 func (e *Encoder) Encode(word string, pinyin []string) []string {
+	if word == "" {
+		return []string{}
+	}
 	if codes, ok := e.Correct[word]; ok {
 		return codes
 	}
-
 	chars := []rune(word)
 	length := len(chars)
-	if length == 0 {
-		return []string{}
-	}
-
-	// [A, B, a1, b1]
-	rl, ok := e.Rule[length]
-	if !ok {
-		rl = e.Rule[0]
-		// 单字规则
-		if length == 1 {
-			rl = []rule{
-				{isYin: true, idxChar: 0, idxCode: 0},  // 音部分
-				{isYin: false, idxChar: 0, idxCode: 0}, // 形部分
-			}
-		}
-	}
+	rl := e.getRule(length)
 
 	// 形码用不到音
 	if e.Mapping == nil {
@@ -80,6 +67,25 @@ func (e *Encoder) Encode(word string, pinyin []string) []string {
 	ret = util.RmRepeat(ret)
 	// fmt.Printf("? 词组: %v, 拼音: %v, 转换后: %v, 生成: %v\n", word, pinyin, pycodes, ret)
 	return ret
+}
+
+func (e *Encoder) getRule(length int) []rule {
+	// [A, B, a1, b1]
+	if rl, ok := e.Rule[length]; ok {
+		return rl
+	}
+	// 单字默认规则
+	if length == 1 {
+		return []rule{
+			{isYin: true, idxChar: 0, idxCode: 0},  // 音部分
+			{isYin: false, idxChar: 0, idxCode: 0}, // 形部分
+		}
+	}
+	// 特殊规则
+	if len(e.sRule) != 0 {
+		return e.sRule
+	}
+	return e.Rule[0]
 }
 
 // 一组拼音生成的编码
