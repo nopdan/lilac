@@ -17,13 +17,14 @@ type config struct {
 	Sort int    `ini:"Sort"`
 
 	dict    string
+	check   string
 	encoder *encoder.Encoder
 }
 
 func newConfig(path string) *config {
 	// 手动解析下列 Section
 	cfg, err := ini.LoadSources(ini.LoadOptions{
-		UnparseableSections: []string{"Dict", "Correct", "Char", "Mapping"},
+		UnparseableSections: []string{"Dict", "Correct", "Char", "Mapping", "Check"},
 	}, path)
 	if err != nil {
 		panic(err)
@@ -51,14 +52,14 @@ func newConfig(path string) *config {
 	c.encoder = enc
 
 	c.dict = cfg.Section("Dict").Body()
+	c.check = cfg.Section("Check").Body()
 	fmt.Printf("c: %+v\n", c)
 	return c
 }
 
-// 生成码表
-func Generate(path string) [][]string {
+func Run(path string) [][]string {
 	c := newConfig(path)
-
+	// 生成码表
 	rd := strings.NewReader(c.dict)
 	scan := bufio.NewScanner(rd)
 	ret := make([][]string, 0)
@@ -69,6 +70,11 @@ func Generate(path string) [][]string {
 			return ret[i][1] < ret[j][1]
 		})
 	}
+	// 校验码表
+	rd.Reset(c.check)
+	scan = bufio.NewScanner(rd)
+	c.runCheck(scan)
+
 	return ret
 }
 
@@ -76,6 +82,10 @@ func Generate(path string) [][]string {
 func (c *config) run(scan *bufio.Scanner, ret [][]string, flag bool) [][]string {
 	for scan.Scan() {
 		line := scan.Text()
+		if line == "" {
+			continue
+		}
+
 		if sc, newFlag, err := include(line); err == nil {
 			ret = c.run(sc, ret, newFlag)
 			continue
@@ -86,29 +96,19 @@ func (c *config) run(scan *bufio.Scanner, ret [][]string, flag bool) [][]string 
 		if flag {
 			ok = true
 		}
-		entry := []string{word}
-		if len(tmp) == 1 {
-			gen := c.encoder.Encode(word, []string{})
-			// fmt.Printf("? 词组: %v, 生成: %v\n", word, gen)
-			entry = append(entry, gen...)
-			ret = append(ret, flat(entry)...)
+		if !ok && len(tmp) == 2 {
+			ret = append(ret, tmp)
 			continue
 		}
 
+		entry := []string{word}
+		pinyin := []string{}
 		if len(tmp) == 2 {
-			if !ok {
-				ret = append(ret, tmp)
-				continue
-			}
-			// ? 号开头为自动造词
-			py := strings.Split(tmp[1], " ")
-			gen := c.encoder.Encode(word, py)
-			// fmt.Printf("? 词组: %v, 拼音: %v, 生成: %v\n", word, py, gen)
-			entry = append(entry, gen...)
-			ret = append(ret, flat(entry)...)
-		} else {
-			fmt.Println("错误:", line)
+			pinyin = strings.Split(tmp[1], " ")
 		}
+		gen := c.encoder.Encode(word, pinyin)
+		entry = append(entry, gen...)
+		ret = append(ret, flat(entry)...)
 	}
 	return ret
 }

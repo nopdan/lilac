@@ -53,7 +53,7 @@ func (e *Encoder) Encode(word string, pinyin []string) []string {
 
 	// 形码用不到音
 	if e.Mapping == nil {
-		one := e.encodeOne(chars, []string{}, rl)
+		one := e.encodeOne(chars, pinyin, rl)
 		// fmt.Printf("? 词组: %v, 生成: %v\n", word, one)
 		return one
 	}
@@ -67,6 +67,7 @@ func (e *Encoder) Encode(word string, pinyin []string) []string {
 	}
 	// zhi shi => [[ai ui], [ai vi], [ei ui], [ei vi]]
 	pycodes = e.Mapping.FromPinyin(pinyin)
+	// fmt.Printf("注音: %v\t%v\t%v\n", word, pinyin, pycodes)
 
 	for _, pycode := range pycodes {
 		// [ai, ui]
@@ -89,12 +90,16 @@ func (e *Encoder) encodeOne(chars []rune, pycode []string, rl []rule) []string {
 			if idx == -1 {
 				idx = len(pycode) - 1
 			}
-			codes = []string{pycode[idx]}
+			if idx < len(pycode) {
+				codes = []string{pycode[idx]}
+			}
 		} else {
 			if idx == -1 {
 				idx = len(chars) - 1
 			}
-			codes = e.Char[string(chars[idx])]
+			if idx < len(chars) {
+				codes = e.Char[string(chars[idx])]
+			}
 		}
 		// fmt.Printf("codes: %v\n", codes)
 		// 等于 0 时取全部编码

@@ -14,6 +14,6 @@ func main() {
 	input := args[1]
 	output := args[2]
 
-	dict := lilac.Generate(input)
+	dict := lilac.Run(input)
 	lilac.WriteFile(dict, output)
 }
