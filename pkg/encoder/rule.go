@@ -13,10 +13,17 @@ import (
 :A1+B1+C1+Z1+a1+b1
 
 special   ab++
-
-map[int][]rule
 */
+
+// 一条规则
 type rule struct {
+	dc  []unit // 定长规则
+	zj  []unit // 不定长（整句）规则
+	sep string // 整句编码分隔符
+}
+
+// 规则的最小单位，如 a1 B
+type unit struct {
 	isYin   bool // 大写字母表示音
 	idxChar int  // 字的索引，-1 表示最后一个字
 	idxCode int
@@ -28,61 +35,64 @@ func (e *Encoder) initRule(rules string) {
 	lines := strings.Split(rules, ",")
 	fmt.Println(lines)
 
-	// 处理特殊规则 a1+a2..
-	special := false
-	if len(lines) == 1 {
-		lines[0], special = strings.CutSuffix(lines[0], "..")
-	}
 	for _, line := range lines {
 		tmp := strings.Split(line, ":")
-		if len(tmp) == 1 {
-			// 没有 : 特殊规则
-			if special {
-				e.sRule = parse(line)
-				return
-			}
+		if len(tmp) != 2 {
 			fmt.Printf("规则解析错误: %v, line: %v\n", rules, line)
 			panic("")
 		}
 		// 冒号前面表示词长
 		length, err := strconv.Atoi(tmp[0])
-		if len(tmp) != 2 || err != nil && tmp[0] != "" {
+		if err != nil && tmp[0] != "" {
 			fmt.Printf("规则解析错误: %v, line: %v\n", rules, line)
 			panic(err)
 		}
-		e.Rule[length] = parse(tmp[1])
+		rl := rule{}
+		tmp = strings.Split(tmp[1], "..")
+		// 整句规则
+		if len(tmp) == 2 {
+			rl.zj = parseUnits(tmp[0])
+			if tmp[1] == "_" {
+				tmp[1] = " "
+			}
+			rl.sep = tmp[1]
+		} else {
+			// 定长规则
+			rl.dc = parseUnits(tmp[0])
+		}
+		e.Rule[length] = rl
 	}
 }
 
 // 解析规则 A+a+A2+a11
-func parse(r string) []rule {
+func parseUnits(r string) []unit {
 	tmp := strings.Split(r, "+")
-	rl := make([]rule, len(tmp))
+	rl := make([]unit, len(tmp))
 	for i, v := range tmp {
-		rl[i] = parseRule(v)
+		rl[i] = parseUnit(v)
 	}
 	return rl
 }
 
 // 解析规则 A a A2 a11
-func parseRule(r string) rule {
-	rl := rule{}
+func parseUnit(r string) unit {
+	unit := unit{}
 
 	parse := func(a, z byte) {
-		rl.idxChar = int(r[0] - a)
+		unit.idxChar = int(r[0] - a)
 		if r[0] == z {
-			rl.idxChar = -1 // 最后一个字
+			unit.idxChar = -1 // 最后一个字
 		}
 		if len(r) >= 2 {
 			var err error
-			rl.idxCode, err = strconv.Atoi(r[1:]) // 编码的索引
+			unit.idxCode, err = strconv.Atoi(r[1:]) // 编码的索引
 			if err != nil {
 				fmt.Printf("err rule part: %v\n", r)
 			}
 		}
 	}
 	if 'A' <= r[0] && r[0] <= 'Z' {
-		rl.isYin = true
+		unit.isYin = true
 		parse('A', 'Z')
 	} else if 'a' <= r[0] && r[0] <= 'z' {
 		// rl.isYin = false
@@ -90,7 +100,7 @@ func parseRule(r string) rule {
 	} else {
 		fmt.Printf("err rule part: %v\n", r)
 	}
-	return rl
+	return unit
 }
 
 func TrimSpace(s string) string {

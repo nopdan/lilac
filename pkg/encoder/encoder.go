@@ -13,8 +13,7 @@ import (
 type Encoder struct {
 	Correct map[string][]string
 
-	Rule    map[int][]rule
-	sRule   []rule // 特殊规则 a1+a2..
+	Rule    map[int]rule
 	Char    map[string][]string
 	Mapping *m.Mapping
 	py      *pinyin.Pinyin
@@ -22,7 +21,7 @@ type Encoder struct {
 
 func NewEncoder(rules string) *Encoder {
 	e := new(Encoder)
-	e.Rule = make(map[int][]rule)
+	e.Rule = make(map[int]rule)
 	e.initRule(rules)
 	e.py = pinyin.New()
 	return e
@@ -69,63 +68,74 @@ func (e *Encoder) Encode(word string, pinyin []string) []string {
 	return ret
 }
 
-func (e *Encoder) getRule(length int) []rule {
+func (e *Encoder) getRule(length int) rule {
 	// [A, B, a1, b1]
 	if rl, ok := e.Rule[length]; ok {
 		return rl
 	}
 	// 单字默认规则
 	if length == 1 {
-		return []rule{
+		return rule{dc: []unit{
 			{isYin: true, idxChar: 0, idxCode: 0},  // 音部分
 			{isYin: false, idxChar: 0, idxCode: 0}, // 形部分
-		}
-	}
-	// 特殊规则
-	if len(e.sRule) != 0 {
-		return e.sRule
+		}}
 	}
 	return e.Rule[0]
 }
 
 // 一组拼音生成的编码
-func (e *Encoder) encodeOne(chars []rune, pycode []string, rl []rule) []string {
+func (e *Encoder) encodeOne(chars []rune, pycode []string, rl rule) []string {
 	// fmt.Printf("rl: %v\n", rl)
 	tmp := make([][]string, 0)
-	for _, r := range rl {
-		idx := r.idxChar
+
+	// 取一码
+	encode := func(idxChar, idxCode int, isYin bool) {
 		var codes []string
-		if r.isYin {
-			if idx == -1 {
-				idx = len(pycode) - 1
+		if isYin {
+			if idxChar == -1 {
+				idxChar = len(pycode) - 1
 			}
-			if idx < len(pycode) {
-				codes = []string{pycode[idx]}
+			if idxChar < len(pycode) {
+				codes = []string{pycode[idxChar]}
 			}
 		} else {
-			if idx == -1 {
-				idx = len(chars) - 1
+			if idxChar == -1 {
+				idxChar = len(chars) - 1
 			}
-			if idx < len(chars) {
-				codes = e.Char[string(chars[idx])]
+			if idxChar < len(chars) {
+				codes = e.Char[string(chars[idxChar])]
 			}
 		}
 		// fmt.Printf("codes: %v\n", codes)
 		// 等于 0 时取全部编码
-		if r.idxCode != 0 {
+		if idxCode != 0 {
 			var err error
-			codes, err = cut(codes, r.idxCode)
+			codes, err = cut(codes, idxCode)
 			if err != nil {
 				fmt.Println(err, "编码错误", string(chars), pycode)
-				continue
+				return
 			}
 		}
 		tmp = append(tmp, codes)
 	}
+
+	// 定长规则为空，则为整句规则
+	if len(rl.dc) != 0 {
+		for _, unit := range rl.dc {
+			encode(unit.idxChar, unit.idxCode, unit.isYin)
+		}
+	} else {
+		for i := range chars {
+			for _, unit := range rl.zj {
+				encode(i, unit.idxCode, unit.isYin)
+			}
+		}
+	}
+
 	tmp = util.Product(tmp)
 	ret := make([]string, len(tmp))
 	for i := range tmp {
-		ret[i] = merge(tmp[i])
+		ret[i] = strings.Join(tmp[i], rl.sep)
 	}
 	return ret
 }
@@ -140,12 +150,4 @@ func cut(codes []string, idx int) ([]string, error) {
 		ret = append(ret, string(codes[i][idx-1]))
 	}
 	return ret, nil
-}
-
-func merge(sli []string) string {
-	var s strings.Builder
-	for i := range sli {
-		s.WriteString(sli[i])
-	}
-	return s.String()
 }
