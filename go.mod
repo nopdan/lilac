@@ -3,7 +3,7 @@ module github.com/flowerime/lilac
 go 1.19
 
 require (
-	github.com/flowerime/pinyin v0.3.0
+	github.com/flowerime/pinyin v0.3.2
 	github.com/nopdan/ku v0.3.2
 	gopkg.in/ini.v1 v1.67.0
 )
