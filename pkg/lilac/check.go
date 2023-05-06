@@ -14,8 +14,10 @@ func (c *config) runCheck(scan *bufio.Scanner) {
 	readCheck(scan, dict)
 	for word, codes := range dict {
 		gen := c.encoder.Encode(word, []string{})
-		if !contains(gen, codes) {
-			fmt.Printf("Check Error! 词组: %v %v\t生成: %v\n", word, codes, gen)
+		yin := c.encoder.Pinyin.Match(word)
+		// 编码不匹配，并且拼音长和词长相等
+		if !contains(gen, codes) && utf8.RuneCountInString(word) == len(yin) {
+			fmt.Printf("Check Error! 词组: %v %v\t生成: %v 读音: %v\n", word, codes, gen, c.encoder.Pinyin.Match(word))
 		}
 	}
 }
@@ -47,10 +49,20 @@ func readCheck(scan *bufio.Scanner, ret map[string][]string) {
 	}
 }
 
+// 包含编码，或者简码
+func contain(codes []string, code string) bool {
+	for _, item := range codes {
+		if strings.HasPrefix(code, item) {
+			return true
+		}
+	}
+	return false
+}
+
 func contains(gen []string, codes []string) bool {
 	flag := false
 	for _, code := range gen {
-		if ku.Contain(codes, code) {
+		if contain(codes, code) {
 			flag = true
 		}
 	}

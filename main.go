@@ -18,14 +18,25 @@ func main() {
 	input := args[1]
 	output := args[2]
 
-	conf := lilac.NewConfig(input, NewPinyin())
-	dict := conf.Build()
+	dict := build(input)
 	lilac.WriteFile(dict, output)
 }
 
-func NewPinyin() *pinyin.Pinyin {
+func build(path string) [][]string {
 	py := pinyin.New()
-	filepath.Walk("data", func(path string, info fs.FileInfo, err error) error {
+	py.AddFile("./pinyin-data/pinyin.txt")
+	py.AddFile("./pinyin-data/small.txt")
+	py.AddFile("./pinyin-data/correct.txt")
+	py.AddFile("./correct.txt")
+	// appendDir(py, "data")
+
+	conf := lilac.NewConfig(path, py)
+	return conf.Build()
+}
+
+// 追加目录下的所有文件数据
+func AppendDir(py *pinyin.Pinyin, dir string) {
+	filepath.Walk(dir, func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
 			fmt.Printf("err: %v\n", err)
 			return err
@@ -35,5 +46,4 @@ func NewPinyin() *pinyin.Pinyin {
 		}
 		return nil
 	})
-	return py
 }
