@@ -33,7 +33,7 @@ type unit struct {
 func (e *Encoder) initRule(rules string) {
 	rules = TrimSpace(rules)
 	lines := strings.Split(rules, ",")
-	fmt.Println(lines)
+	// fmt.Println(lines)
 
 	for _, line := range lines {
 		tmp := strings.Split(line, ":")

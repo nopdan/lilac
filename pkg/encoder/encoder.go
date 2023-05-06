@@ -11,8 +11,6 @@ import (
 )
 
 type Encoder struct {
-	Correct map[string][]string
-
 	Rule    map[int]rule
 	Char    map[string][]string
 	Mapping *m.Mapping
@@ -30,9 +28,6 @@ func NewEncoder(rules string) *Encoder {
 func (e *Encoder) Encode(word string, pinyin []string) []string {
 	if word == "" {
 		return []string{}
-	}
-	if codes, ok := e.Correct[word]; ok {
-		return codes
 	}
 	chars := []rune(word)
 	length := len(chars)

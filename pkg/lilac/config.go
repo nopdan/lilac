@@ -24,7 +24,7 @@ type config struct {
 func NewConfig(path string, py *pinyin.Pinyin) *config {
 	// 手动解析下列 Section
 	cfg, err := ini.LoadSources(ini.LoadOptions{
-		UnparseableSections: []string{"Dict", "Correct", "Char", "Mapping", "Check"},
+		UnparseableSections: []string{"Dict", "Char", "Mapping", "Check"},
 	}, path)
 	if err != nil {
 		panic(err)
@@ -41,8 +41,6 @@ func NewConfig(path string, py *pinyin.Pinyin) *config {
 
 	enc := encoder.NewEncoder(c.Rule)
 	enc.Pinyin = py
-	text = cfg.Section("Correct").Body()
-	enc.Correct = HandleText(text)
 	text = cfg.Section("Char").Body()
 	enc.Char = HandleText(text)
 	text = cfg.Section("Mapping").Body()
@@ -54,7 +52,7 @@ func NewConfig(path string, py *pinyin.Pinyin) *config {
 
 	c.dict = cfg.Section("Dict").Body()
 	c.check = cfg.Section("Check").Body()
-	fmt.Printf("c: %+v\n", c)
+	// fmt.Printf("c: %+v\n", c)
 	return c
 }
 
