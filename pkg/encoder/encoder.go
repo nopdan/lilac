@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	m "github.com/flowerime/lilac/pkg/mapping"
-	"github.com/flowerime/lilac/pkg/util"
 	"github.com/flowerime/pinyin"
+	"github.com/nopdan/ku"
 )
 
 type Encoder struct {
@@ -16,14 +16,13 @@ type Encoder struct {
 	Rule    map[int]rule
 	Char    map[string][]string
 	Mapping *m.Mapping
-	py      *pinyin.Pinyin
+	Pinyin  *pinyin.Pinyin
 }
 
 func NewEncoder(rules string) *Encoder {
 	e := new(Encoder)
 	e.Rule = make(map[int]rule)
 	e.initRule(rules)
-	e.py = pinyin.New()
 	return e
 }
 
@@ -40,7 +39,7 @@ func (e *Encoder) Encode(word string, pinyin []string) []string {
 	rl := e.getRule(length)
 
 	// 形码用不到音
-	if e.Mapping == nil {
+	if e.Mapping == nil || e.Pinyin == nil {
 		one := e.encodeOne(chars, pinyin, rl)
 		// fmt.Printf("? 词组: %v, 生成: %v\n", word, one)
 		return one
@@ -51,7 +50,7 @@ func (e *Encoder) Encode(word string, pinyin []string) []string {
 	var pycodes [][]string
 	// 词库中没有拼音，需要自动注音
 	if len(pinyin) == 0 {
-		pinyin = e.py.Match(word)
+		pinyin = e.Pinyin.Match(word)
 		// fmt.Println(word, pinyin)
 	}
 	// zhi shi => [[ai ui], [ai vi], [ei ui], [ei vi]]
@@ -63,7 +62,7 @@ func (e *Encoder) Encode(word string, pinyin []string) []string {
 		one := e.encodeOne(chars, pycode, rl)
 		ret = append(ret, one...)
 	}
-	ret = util.RmRepeat(ret)
+	ret = ku.Unique(ret)
 	// fmt.Printf("? 词组: %v, 拼音: %v, 转换后: %v, 生成: %v\n", word, pinyin, pycodes, ret)
 	return ret
 }
@@ -75,10 +74,7 @@ func (e *Encoder) getRule(length int) rule {
 	}
 	// 单字默认规则
 	if length == 1 {
-		return rule{dc: []unit{
-			{isYin: true, idxChar: 0, idxCode: 0},  // 音部分
-			{isYin: false, idxChar: 0, idxCode: 0}, // 形部分
-		}}
+		return rule{dc: parseUnits("A+a")}
 	}
 	return e.Rule[0]
 }
@@ -132,7 +128,7 @@ func (e *Encoder) encodeOne(chars []rune, pycode []string, rl rule) []string {
 		}
 	}
 
-	tmp = util.Product(tmp)
+	tmp = ku.Product(tmp)
 	ret := make([]string, len(tmp))
 	for i := range tmp {
 		ret[i] = strings.Join(tmp[i], rl.sep)

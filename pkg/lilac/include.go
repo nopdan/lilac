@@ -5,7 +5,7 @@ import (
 	"errors"
 	"strings"
 
-	util "github.com/flowerime/goutil"
+	"github.com/nopdan/ku"
 )
 
 // 处理特殊行，引入其他文件，flag 表示是否为辅助生成的码表
@@ -19,7 +19,7 @@ func include(line string) (*bufio.Scanner, bool, error) {
 	if line, ok = strings.CutSuffix(line, ")"); !ok {
 		return nil, flag, errors.New(line + " doesn't have suffix")
 	}
-	rd, err := util.Read(line)
+	rd, err := ku.Read(line)
 	if err != nil {
 		return nil, flag, err
 	}

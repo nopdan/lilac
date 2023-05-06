@@ -3,22 +3,24 @@ package shorten
 import (
 	"strconv"
 	"strings"
-
-	"github.com/flowerime/rose/pkg/rose"
 )
 
-// rule 1:0,2:3,3:2,6: 默认1，空无限
-func Shorten(table *rose.WubiTable, rule string) {
+// rule 默认1，空无限
+// 1:0,2:3,3:2,6: => 1:0,2:3,3:2,4:1,5:1,6:99999999
+func Shorten(table [][]string, rule string) {
 	rl := parseRule(rule)
 	countMap := make(map[string]int)
-	for i := 0; i < len(*table); i++ {
-		wc := (*table)[i]
-		for j := 1; j <= len(wc.Code); j++ {
-			curr := string(wc.Code[:j])
+	for i := 0; i < len(table); i++ {
+		wc := table[i]
+		if len(wc) != 2 {
+			continue
+		}
+		for j := 1; j <= len(wc[1]); j++ {
+			curr := wc[1][:j]
 			count := countMap[curr]
 			if count < rl[j] {
-				wc.Code = curr
-				(*table)[i] = wc
+				wc[1] = curr
+				table[i] = wc
 				countMap[curr]++
 				break
 			}
@@ -31,7 +33,6 @@ func Shorten(table *rose.WubiTable, rule string) {
 func parseRule(rule string) []int {
 	ret := make([]int, 0)
 	rule = strings.ReplaceAll(rule, " ", "")
-	rule = strings.ReplaceAll(rule, "，", ",")
 	r := strings.Split(rule, ",")
 	for _, v := range r {
 		tmp := strings.Split(v, ":")

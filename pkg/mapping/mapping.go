@@ -3,7 +3,7 @@ package mapping
 import (
 	"strings"
 
-	"github.com/flowerime/lilac/pkg/util"
+	"github.com/nopdan/ku"
 )
 
 type Mapping struct {
@@ -48,7 +48,7 @@ func (s *Mapping) FromPinyin(py []string) [][]string {
 	for i, yinjie := range py {
 		ret[i] = s.FromYinjie(yinjie)
 	}
-	ret = util.Product(ret)
+	ret = ku.Product(ret)
 	return ret
 }
 
@@ -82,7 +82,7 @@ func (s *Mapping) FromYinjie(yinjie string) []string {
 
 	smKeys := s.Sm_ym[sm]
 	ymKeys := s.Sm_ym[ym]
-	keys := util.Product([][]byte{smKeys, ymKeys})
+	keys := ku.Product([][]byte{smKeys, ymKeys})
 	// fmt.Println(sm, smKeys, ym, ymKeys, keys)
 
 	ret := make([]string, len(keys))

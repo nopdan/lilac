@@ -8,6 +8,7 @@ import (
 
 	"github.com/flowerime/lilac/pkg/encoder"
 	m "github.com/flowerime/lilac/pkg/mapping"
+	"github.com/flowerime/pinyin"
 	"gopkg.in/ini.v1"
 )
 
@@ -20,7 +21,7 @@ type config struct {
 	encoder *encoder.Encoder
 }
 
-func newConfig(path string) *config {
+func NewConfig(path string, py *pinyin.Pinyin) *config {
 	// 手动解析下列 Section
 	cfg, err := ini.LoadSources(ini.LoadOptions{
 		UnparseableSections: []string{"Dict", "Correct", "Char", "Mapping", "Check"},
@@ -39,6 +40,7 @@ func newConfig(path string) *config {
 	var text string
 
 	enc := encoder.NewEncoder(c.Rule)
+	enc.Pinyin = py
 	text = cfg.Section("Correct").Body()
 	enc.Correct = HandleText(text)
 	text = cfg.Section("Char").Body()
@@ -56,8 +58,7 @@ func newConfig(path string) *config {
 	return c
 }
 
-func Run(path string) [][]string {
-	c := newConfig(path)
+func (c *config) Build() [][]string {
 	// 生成码表
 	rd := strings.NewReader(c.dict)
 	scan := bufio.NewScanner(rd)

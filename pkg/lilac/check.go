@@ -4,8 +4,9 @@ import (
 	"bufio"
 	"fmt"
 	"strings"
-	"unicode"
 	"unicode/utf8"
+
+	"github.com/nopdan/ku"
 )
 
 func (c *config) runCheck(scan *bufio.Scanner) {
@@ -36,7 +37,7 @@ func readCheck(scan *bufio.Scanner, ret map[string][]string) {
 			continue
 		}
 		// 忽略包含非汉字
-		if !isHan(word) {
+		if !ku.IsHan(word) {
 			continue
 		}
 		if _, ok := ret[word]; !ok {
@@ -46,30 +47,11 @@ func readCheck(scan *bufio.Scanner, ret map[string][]string) {
 	}
 }
 
-func contain(code string, codes []string) bool {
-	for i := range codes {
-		if strings.HasPrefix(codes[i], code) {
-			return true
-		}
-	}
-	return false
-}
-
 func contains(gen []string, codes []string) bool {
 	flag := false
 	for _, code := range gen {
-		if contain(code, codes) {
+		if ku.Contain(codes, code) {
 			flag = true
-		}
-	}
-	return flag
-}
-
-func isHan(word string) bool {
-	flag := true
-	for _, r := range word {
-		if !unicode.Is(unicode.Han, r) {
-			flag = false
 		}
 	}
 	return flag
