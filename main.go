@@ -25,7 +25,7 @@ func main() {
 	lilac.WriteFile(dict, output)
 }
 
-func build(path string) [][]string {
+func build(path string) [][2]string {
 	py := pinyin.New()
 	py.AddFile("./pinyin-data/pinyin.txt")
 	py.AddFile("./pinyin-data/duoyin.txt")

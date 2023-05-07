@@ -5,7 +5,7 @@ import (
 	"os"
 )
 
-func Output(dict [][]string) []byte {
+func Output(dict [][2]string) []byte {
 	var buf bytes.Buffer
 	for _, entry := range dict {
 		buf.WriteString(entry[0])
@@ -16,7 +16,7 @@ func Output(dict [][]string) []byte {
 	return buf.Bytes()
 }
 
-func WriteFile(dict [][]string, path string) {
+func WriteFile(dict [][2]string, path string) {
 	data := Output(dict)
 	err := os.WriteFile(path, data, 0666)
 	if err != nil {

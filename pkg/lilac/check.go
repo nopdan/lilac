@@ -2,24 +2,43 @@ package lilac
 
 import (
 	"bufio"
-	"fmt"
 	"strings"
 	"unicode/utf8"
 
 	"github.com/nopdan/ku"
 )
 
-func (c *config) runCheck(scan *bufio.Scanner) {
+type CheckResult struct {
+	Word   string
+	Codes  []string // 码表中的编码
+	Gen    []string // 生成的编码
+	Pinyin []string // 自动标注的读音
+}
+
+// 校验码表
+func (c *config) Check() []*CheckResult {
+	rd := strings.NewReader(c.check)
+	scan := bufio.NewScanner(rd)
 	dict := make(map[string][]string)
 	readCheck(scan, dict)
+
+	wrong := make([]*CheckResult, 0)
 	for word, codes := range dict {
 		gen := c.encoder.Encode(word, []string{})
+		// 形码方案
+		if c.encoder.Mapping == nil {
+			if !contains(gen, codes) {
+				wrong = append(wrong, &CheckResult{word, codes, gen, []string{}})
+			}
+			continue
+		}
 		yin := c.encoder.Pinyin.Match(word)
 		// 编码不匹配，并且拼音长和词长相等
 		if !contains(gen, codes) && utf8.RuneCountInString(word) == len(yin) {
-			fmt.Printf("Check Error! 词组: %v %v\t生成: %v 读音: %v\n", word, codes, gen, c.encoder.Pinyin.Match(word))
+			wrong = append(wrong, &CheckResult{word, codes, gen, yin})
 		}
 	}
+	return wrong
 }
 
 func readCheck(scan *bufio.Scanner, ret map[string][]string) {

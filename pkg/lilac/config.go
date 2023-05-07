@@ -14,7 +14,11 @@ import (
 
 type config struct {
 	Rule string `ini:"Rule"`
-	Sort int    `ini:"Sort"`
+	Sort bool   `ini:"Sort"`
+
+	Keep     bool   `ini:"保留单字全码"`
+	CharRule string `ini:"单字简码规则"`
+	WordRule string `ini:"词组简码规则"`
 
 	dict    string
 	check   string
@@ -56,28 +60,26 @@ func NewConfig(path string, py *pinyin.Pinyin) *config {
 	return c
 }
 
-func (c *config) Build() [][]string {
-	// 生成码表
+// 生成码表
+func (c *config) Build() [][2]string {
 	rd := strings.NewReader(c.dict)
 	scan := bufio.NewScanner(rd)
-	ret := make([][]string, 0)
+	ret := make([][2]string, 0)
 	ret = c.run(scan, ret, false)
 
-	if c.Sort == 1 {
+	s := newShortener(c)
+	ret = s.Shorten(ret)
+
+	if c.Sort {
 		sort.SliceStable(ret, func(i, j int) bool {
 			return ret[i][1] < ret[j][1]
 		})
 	}
-	// 校验码表
-	rd.Reset(c.check)
-	scan = bufio.NewScanner(rd)
-	c.runCheck(scan)
-
 	return ret
 }
 
 // 递归
-func (c *config) run(scan *bufio.Scanner, ret [][]string, flag bool) [][]string {
+func (c *config) run(scan *bufio.Scanner, ret [][2]string, flag bool) [][2]string {
 	for scan.Scan() {
 		line := scan.Text()
 		if line == "" {
@@ -95,7 +97,7 @@ func (c *config) run(scan *bufio.Scanner, ret [][]string, flag bool) [][]string 
 			ok = true
 		}
 		if !ok && len(tmp) == 2 {
-			ret = append(ret, tmp)
+			ret = append(ret, [2]string{tmp[0], tmp[1]})
 			continue
 		}
 
@@ -112,13 +114,13 @@ func (c *config) run(scan *bufio.Scanner, ret [][]string, flag bool) [][]string 
 }
 
 // 展开一词多编码
-func flat(entry []string) [][]string {
-	if len(entry) <= 2 {
-		return [][]string{entry}
+func flat(entry []string) [][2]string {
+	if len(entry) < 2 {
+		return [][2]string{}
 	}
-	ret := make([][]string, 0, len(entry)-1)
+	ret := make([][2]string, 0, len(entry)-1)
 	for i := 1; i < len(entry); i++ {
-		ret = append(ret, []string{entry[0], entry[i]})
+		ret = append(ret, [2]string{entry[0], entry[i]})
 	}
 	// fmt.Println(entry, ret)
 	return ret
