@@ -1,7 +1,6 @@
 package lilac
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 	"unicode/utf8"
@@ -17,7 +16,7 @@ type shortener struct {
 	quanma   [][2]string    // 单字全码
 }
 
-func newShortener(c *config) *shortener {
+func newShortener(c *Config) *shortener {
 	s := new(shortener)
 	s.keep = c.Keep
 	s.charRule = newRule(c.CharRule)
@@ -30,7 +29,7 @@ func newShortener(c *config) *shortener {
 // rule 默认1，空无限
 // 1:0,2:3,3:2,6: => 1:0,2:3,3:2,4:1,5:1,6:99999999
 func (s *shortener) Shorten(table [][2]string) [][2]string {
-	fmt.Printf("s: %v\n", s)
+	// fmt.Printf("s: %v\n", s)
 	for i := range table {
 		word, code := table[i][0], table[i][1]
 		// 判断是否是词组

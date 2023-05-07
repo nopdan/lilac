@@ -1,10 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/flowerime/lilac/pkg/lilac"
 	"github.com/flowerime/pinyin"
@@ -17,15 +19,32 @@ func main() {
 	args := os.Args
 	if len(args) >= 2 {
 		input = args[1]
-	} else if len(args) >= 3 {
+	}
+	if len(args) >= 3 {
 		output = args[2]
 	}
 
-	dict := build(input)
+	conf := newConfig(input)
+	dict := conf.Build()
 	lilac.WriteFile(dict, output)
+
+	check := conf.Check()
+	var buf bytes.Buffer
+	buf.WriteString("词条\t编码\t生成的编码\t拼音")
+	for _, v := range check {
+		buf.WriteString(v.Word)
+		buf.WriteByte('\t')
+		buf.WriteString(strings.Join(v.Codes, " "))
+		buf.WriteByte('\t')
+		buf.WriteString(strings.Join(v.Gen, " "))
+		buf.WriteByte('\t')
+		buf.WriteString(strings.Join(v.Pinyin, " "))
+		buf.WriteByte('\n')
+	}
+	os.WriteFile("check.txt", buf.Bytes(), 0666)
 }
 
-func build(path string) [][2]string {
+func newConfig(path string) *lilac.Config {
 	py := pinyin.New()
 	py.AddFile("./pinyin-data/pinyin.txt")
 	py.AddFile("./pinyin-data/duoyin.txt")
@@ -34,7 +53,7 @@ func build(path string) [][2]string {
 	// appendDir(py, "data")
 
 	conf := lilac.NewConfig(path, py)
-	return conf.Build()
+	return conf
 }
 
 // 追加目录下的所有文件数据

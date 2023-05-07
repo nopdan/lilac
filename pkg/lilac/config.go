@@ -12,7 +12,7 @@ import (
 	"gopkg.in/ini.v1"
 )
 
-type config struct {
+type Config struct {
 	Rule string `ini:"Rule"`
 	Sort bool   `ini:"Sort"`
 
@@ -25,7 +25,7 @@ type config struct {
 	encoder *encoder.Encoder
 }
 
-func NewConfig(path string, py *pinyin.Pinyin) *config {
+func NewConfig(path string, py *pinyin.Pinyin) *Config {
 	// 手动解析下列 Section
 	cfg, err := ini.LoadSources(ini.LoadOptions{
 		UnparseableSections: []string{"Dict", "Char", "Mapping", "Check"},
@@ -34,7 +34,7 @@ func NewConfig(path string, py *pinyin.Pinyin) *config {
 		panic(err)
 	}
 
-	c := new(config)
+	c := new(Config)
 	config := cfg.Section("Config")
 	err = config.MapTo(c)
 	if err != nil {
@@ -61,7 +61,7 @@ func NewConfig(path string, py *pinyin.Pinyin) *config {
 }
 
 // 生成码表
-func (c *config) Build() [][2]string {
+func (c *Config) Build() [][2]string {
 	rd := strings.NewReader(c.dict)
 	scan := bufio.NewScanner(rd)
 	ret := make([][2]string, 0)
@@ -79,7 +79,7 @@ func (c *config) Build() [][2]string {
 }
 
 // 递归
-func (c *config) run(scan *bufio.Scanner, ret [][2]string, flag bool) [][2]string {
+func (c *Config) run(scan *bufio.Scanner, ret [][2]string, flag bool) [][2]string {
 	for scan.Scan() {
 		line := scan.Text()
 		if line == "" {

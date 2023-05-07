@@ -16,7 +16,7 @@ type CheckResult struct {
 }
 
 // 校验码表
-func (c *config) Check() []*CheckResult {
+func (c *Config) Check() []*CheckResult {
 	rd := strings.NewReader(c.check)
 	scan := bufio.NewScanner(rd)
 	dict := make(map[string][]string)
