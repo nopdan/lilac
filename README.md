@@ -32,7 +32,7 @@
 
 ### Config
 
-#### *Rule*
+#### _Rule_
 
 自动生成编码的规则，由 `,` 分隔不同词长，`<词长>:<编码规则>`，省略词长则作为默认的规则。
 
@@ -40,19 +40,58 @@
 
 整句有特殊规则，以 `..(分隔符)` 结尾，如 `..'` 表示以 `'` 分隔，分隔符可以省略。
 
-#### *保留单字全码(true|false)*
+<details>
+<summary>例子</summary>
+
+```ini
+; 形码
+Rule = 2:a1+a2+b1+b2, \
+    3:a1+b1+c1+c2, \
+    :a1+b1+c1+z1
+
+; 双拼 2码音 2码形
+Rule = 2:A+B, \
+    3:A1+A2+B1+C1, \
+    :A1+B1+C1+Z1
+
+; 键道6顶功 2码音 4码形
+Rule = 2:A+B+a1+b1, \
+    3:A1+B1+C1+a1+b1+c1, \
+    :A1+B1+C1+Z1+a1+b1
+
+; 两笔 1码音 3码形
+Rule = 2:A+a1+B+b1, \
+    3:A+a1+B+C, \
+    :A+B+C+Z
+
+; 星空两笔顶功 1码音 5码形
+Rule = 2:A+a1+B+b1+a2+b2, \
+    3:A+B+C+a2+b2+c2, \
+    :A+B+C+Z+a2+b2
+
+; 整句第一个字母随便填，只和大小写有关，反正都要取遍每一个字
+; 红辣椒五笔
+Rule = :n1+n2..
+
+; 双拼整句？空格分隔（用_代替）
+Rule = :N.._
+```
+
+</details>
+
+#### _保留单字全码(true|false)_
 
 生成简码后是否需要保留单字全码，保留后会追加到词库末尾。
 
-#### *单字简码规则*
+#### _单字简码规则_
 
 由 `,` 分隔不同编码长，`<编码长>:<最大重码数>`，省略重码数则为无限重码，若无对应的编码长，则重码数为 1。
 
-#### *词组简码规则*
+#### _词组简码规则_
 
 同上
 
-#### *Sort(true|false)*
+#### _Sort(true|false)_
 
 是否按照按编码重新排序。
 
@@ -85,6 +124,103 @@
 
 - `大写字母<tab>音素`: 大写字母为键位，音素一般是声母或者韵母，多个音素用空格分隔。
 - `音节<tab>键位`: 都为小写字母
+
+<details>
+<summary>例子：大牛双拼</summary>
+
+```ini
+; 按键(大写)基础映射
+Q	q ua ian
+W	w ei vn
+E	e
+R	r ou
+T	t iu
+Y	y un
+U	sh u
+I	ch i
+O	zh o uo
+P	p ie
+A	zh a
+S	s ao
+D	d an
+F	f ang
+G	g uai ing
+H	h ai ue
+J	j eng van
+K	k en ia
+L	l ong iong
+Z	z uan
+X	x ve uang
+C	c ian
+V	sh v ui
+B	b in
+N	n ui iang
+M	m iao
+
+; 自定义音节，零声母都需要自定义
+a	ea
+ai	eh
+an	ed
+ang	ef
+ao	es
+e	ee
+ei	ew
+en	ek
+er	eu
+o	eo
+ou	er
+; 一个音节可以映射多种按键组合
+shi	ui vi
+```
+
+</details>
+
+<details>
+<summary>例子：哲豆音形</summary>
+
+```ini
+Q	q
+W	w
+E
+R	r
+T	t
+Y	y
+U	q
+I	z zh
+O
+P	p
+A
+S	s sh
+D	d
+F	f
+G	g
+H	h
+J	j
+K	k
+L	l
+Z	z zh
+X	x
+C	c ch
+V
+B	b
+N	n
+M	m
+
+; 自定义音节，零声母都需要自定义
+a	a
+ai	a
+an	a
+ang	a
+ao	a
+e	e
+ei	e
+en	e
+er	e
+o	o
+ou	o
+```
+
+</details>
 
 ## 使用
 
