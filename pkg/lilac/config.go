@@ -3,6 +3,7 @@ package lilac
 import (
 	"bufio"
 	"fmt"
+	"path/filepath"
 	"sort"
 	"strings"
 
@@ -20,6 +21,7 @@ type Config struct {
 	CharRule string `ini:"单字简码规则"`
 	WordRule string `ini:"词组简码规则"`
 
+	dir     string // 配置文件所在目录
 	dict    string
 	check   string
 	encoder *encoder.Encoder
@@ -35,6 +37,7 @@ func NewConfig(path string, py *pinyin.Pinyin) *Config {
 	}
 
 	c := new(Config)
+	c.dir = filepath.Dir(path)
 	config := cfg.Section("Config")
 	err = config.MapTo(c)
 	if err != nil {
@@ -46,9 +49,9 @@ func NewConfig(path string, py *pinyin.Pinyin) *Config {
 	enc := encoder.NewEncoder(c.Rule)
 	enc.Pinyin = py
 	text = cfg.Section("Char").Body()
-	enc.Char = HandleText(text)
+	enc.Char = HandleText(text, c.dir)
 	text = cfg.Section("Mapping").Body()
-	data := HandleText(text)
+	data := HandleText(text, c.dir)
 	if len(data) != 0 {
 		enc.Mapping = m.NewMapping(data)
 	}
@@ -86,7 +89,7 @@ func (c *Config) run(scan *bufio.Scanner, ret [][2]string, flag bool) [][2]strin
 			continue
 		}
 
-		if sc, newFlag, err := include(line); err == nil {
+		if sc, newFlag, err := include(line, c.dir); err == nil {
 			ret = c.run(sc, ret, newFlag)
 			continue
 		}

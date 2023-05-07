@@ -20,7 +20,7 @@ func (c *Config) Check() []*CheckResult {
 	rd := strings.NewReader(c.check)
 	scan := bufio.NewScanner(rd)
 	dict := make(map[string][]string)
-	readCheck(scan, dict)
+	readCheck(scan, dict, c.dir)
 
 	wrong := make([]*CheckResult, 0)
 	for word, codes := range dict {
@@ -41,11 +41,11 @@ func (c *Config) Check() []*CheckResult {
 	return wrong
 }
 
-func readCheck(scan *bufio.Scanner, ret map[string][]string) {
+func readCheck(scan *bufio.Scanner, ret map[string][]string, dir string) {
 	for scan.Scan() {
 		line := scan.Text()
-		if sc, _, err := include(line); err == nil {
-			readCheck(sc, ret)
+		if sc, _, err := include(line, dir); err == nil {
+			readCheck(sc, ret, dir)
 			continue
 		}
 		tmp := strings.Split(line, "\t")

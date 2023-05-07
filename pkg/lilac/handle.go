@@ -6,20 +6,20 @@ import (
 )
 
 // 读取tsv码表
-func HandleText(text string) map[string][]string {
+func HandleText(text, dir string) map[string][]string {
 	ret := make(map[string][]string)
 	rd := strings.NewReader(text)
 	scan := bufio.NewScanner(rd)
-	handle(scan, ret)
+	handle(scan, ret, dir)
 	return ret
 }
 
 // 递归处理
-func handle(scan *bufio.Scanner, ret map[string][]string) {
+func handle(scan *bufio.Scanner, ret map[string][]string, dir string) {
 	for scan.Scan() {
 		line := scan.Text()
-		if sc, _, err := include(line); err == nil {
-			handle(sc, ret)
+		if sc, _, err := include(line, dir); err == nil {
+			handle(sc, ret, dir)
 			continue
 		}
 		tmp := strings.Split(line, "\t")

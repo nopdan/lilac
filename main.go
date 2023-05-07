@@ -27,6 +27,7 @@ func main() {
 	conf := newConfig(input)
 	dict := conf.Build()
 	lilac.WriteFile(dict, output)
+	fmt.Printf("output: %v\n", output)
 
 	check := conf.Check()
 	var buf bytes.Buffer
