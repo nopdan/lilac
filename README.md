@@ -181,15 +181,15 @@ shi	ui vi
 ```ini
 Q	q
 W	w
-E
+; E
 R	r
 T	t
 Y	y
 U	q
 I	z zh
-O
+; O
 P	p
-A
+; A
 S	s sh
 D	d
 F	f
@@ -201,7 +201,7 @@ L	l
 Z	z zh
 X	x
 C	c ch
-V
+; V
 B	b
 N	n
 M	m
@@ -227,3 +227,5 @@ ou	o
 ```sh
 .\lilac.exe path.ini output.txt
 ```
+
+`correct.txt` 也可以修正读音。
