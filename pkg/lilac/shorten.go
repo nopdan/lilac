@@ -16,22 +16,23 @@ type shortener struct {
 	quanma   [][2]string    // 单字全码
 }
 
-func newShortener(c *Config) *shortener {
+func (c *Config) initShortener() {
 	s := new(shortener)
 	s.keep = c.Keep
 	s.charRule = newRule(c.CharRule)
 	s.wordRule = newRule(c.WordRule)
 	s.countMap = make(map[string]int)
 	s.quanma = make([][2]string, 0)
-	return s
+	c.shortener = s
 }
 
 // rule 默认1，空无限
 // 1:0,2:3,3:2,6: => 1:0,2:3,3:2,4:1,5:1,6:99999999
-func (s *shortener) Shorten(table [][2]string) [][2]string {
+func (c *Config) Shorten() {
+	s := c.shortener
 	// fmt.Printf("s: %v\n", s)
-	for i := range table {
-		word, code := table[i][0], table[i][1]
+	for i := range c.Result {
+		word, code := c.Result[i][0], c.Result[i][1]
 		// 判断是否是词组
 		isWord := utf8.RuneCountInString(word) > 1
 		if isWord {
@@ -40,22 +41,23 @@ func (s *shortener) Shorten(table [][2]string) [][2]string {
 				s.countMap[code]++
 				continue
 			}
-			table[i] = s.word(table[i])
+			c.Result[i] = s.word(c.Result[i])
 			continue
 		}
-
+		// 单字
 		if s.charRule == nil {
 			s.countMap[code]++
 			continue
 		}
-		table[i] = s.char(table[i])
+		c.Result[i] = s.char(c.Result[i])
 	}
+	// 合并单字全码
 	if s.keep {
-		table = append(table, s.quanma...) // 合并单字全码
+		c.Result = append(c.Result, s.quanma...)
 	}
-	return table
 }
 
+// 处理单字词条
 func (s *shortener) char(entry [2]string) [2]string {
 	code := entry[1]
 	for j := range code {
@@ -76,6 +78,7 @@ func (s *shortener) char(entry [2]string) [2]string {
 	return entry
 }
 
+// 处理词组词条
 func (s *shortener) word(entry [2]string) [2]string {
 	code := entry[1]
 	for j := range code {

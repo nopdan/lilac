@@ -3,6 +3,7 @@ package lilac
 import (
 	"bufio"
 	"fmt"
+	"io/fs"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -21,110 +22,146 @@ type Config struct {
 	CharRule string `ini:"单字简码规则"`
 	WordRule string `ini:"词组简码规则"`
 
-	dir     string // 配置文件所在目录
-	dict    string
-	check   string
-	encoder *encoder.Encoder
+	encoder   *encoder.Encoder
+	shortener *shortener
+	checker   *checker
+
+	dict  string
+	check string
+
+	Dir      string      // 配置文件所在目录
+	Result   [][2]string // 最终生成的码表
+	MisMatch []*misMatch // 不匹配的编码
+	// key: 空码, value: 后续词和编码
+	Empty map[string][]string // 空码
 }
 
-func NewConfig(path string, py *pinyin.Pinyin) *Config {
-	// 手动解析下列 Section
+// 从文件初始化一个 Config，传入 Config 路径和 拼音数据路径
+func NewConfig(path string, pydata string) *Config {
+	// 跳过解析下列 Section
 	cfg, err := ini.LoadSources(ini.LoadOptions{
 		UnparseableSections: []string{"Dict", "Char", "Mapping", "Check"},
 	}, path)
 	if err != nil {
 		panic(err)
 	}
-
 	c := new(Config)
-	c.dir = filepath.Dir(path)
 	config := cfg.Section("Config")
 	err = config.MapTo(c)
 	if err != nil {
-		fmt.Println(err)
+		panic(err)
 	}
+	fmt.Printf("配置读取成功: %v\n", path)
 
-	var text string
+	c.Dir = filepath.Dir(path)
+	c.dict = cfg.Section("Dict").Body()
+	c.check = cfg.Section("Check").Body()
+	c.initShortener()
+	c.initChecker()
 
+	// 初始化编码器
 	enc := encoder.NewEncoder(c.Rule)
-	enc.Pinyin = py
+	var text string
 	text = cfg.Section("Char").Body()
-	enc.Char = HandleText(text, c.dir)
+	enc.Char = readMap(text, c.Dir)
+
 	text = cfg.Section("Mapping").Body()
-	data := HandleText(text, c.dir)
+	data := readMap(text, c.Dir)
+	// 若存在映射表，则加载拼音数据
+	py := pinyin.New()
 	if len(data) != 0 {
 		enc.Mapping = m.NewMapping(data)
+		addPinyinData(py, pydata)
 	}
 	c.encoder = enc
 
-	c.dict = cfg.Section("Dict").Body()
-	c.check = cfg.Section("Check").Body()
+	c.Result = make([][2]string, 0)
+	c.MisMatch = make([]*misMatch, 0)
+	c.Empty = make(map[string][]string, 0)
 	// fmt.Printf("c: %+v\n", c)
 	return c
 }
 
 // 生成码表
-func (c *Config) Build() [][2]string {
+func (c *Config) Build() {
 	rd := strings.NewReader(c.dict)
 	scan := bufio.NewScanner(rd)
-	ret := make([][2]string, 0)
-	ret = c.run(scan, ret, false)
-
-	s := newShortener(c)
-	ret = s.Shorten(ret)
-
+	c.readDict(scan, false)
+	// 生成简码
+	c.Shorten()
+	// 按照编码排序
 	if c.Sort {
-		sort.SliceStable(ret, func(i, j int) bool {
-			return ret[i][1] < ret[j][1]
+		sort.SliceStable(c.Result, func(i, j int) bool {
+			return c.Result[i][1] < c.Result[j][1]
 		})
 	}
-	return ret
+	// 词库校验
+	c.Check()
 }
 
-// 递归
-func (c *Config) run(scan *bufio.Scanner, ret [][2]string, flag bool) [][2]string {
+// 这个 flag 表示 ?>>() 格式，
+// 里面的词全都为拼音辅助生成编码，
+// 即这个词库是一个拼音词库
+func (c *Config) readDict(scan *bufio.Scanner, flag bool) {
 	for scan.Scan() {
 		line := scan.Text()
+		// 跳过空行
 		if line == "" {
 			continue
 		}
-
-		if sc, newFlag, err := include(line, c.dir); err == nil {
-			ret = c.run(sc, ret, newFlag)
+		// 若符合导入文件的格式则递归执行
+		if sc, newFlag, err := include(line, c.Dir); err == nil {
+			c.readDict(sc, newFlag)
 			continue
 		}
-
+		// 读取一行
 		tmp := strings.Split(line, "\t")
+		// ? 号开头，拼音辅助编码
 		word, ok := strings.CutPrefix(tmp[0], "?")
 		if flag {
 			ok = true
 		}
+		// 这是自带编码的词条，直接加入
 		if !ok && len(tmp) == 2 {
-			ret = append(ret, [2]string{tmp[0], tmp[1]})
+			c.Result = append(c.Result, [2]string{tmp[0], tmp[1]})
 			continue
 		}
-
-		entry := []string{word}
+		// 下面处理 ? 开头的词条
 		pinyin := []string{}
 		if len(tmp) == 2 {
 			pinyin = strings.Split(tmp[1], " ")
 		}
+		// 自动生成的编码，可能有多个
 		gen := c.encoder.Encode(word, pinyin)
-		entry = append(entry, gen...)
-		ret = append(ret, flat(entry)...)
+		for _, code := range gen {
+			c.Result = append(c.Result, [2]string{word, code})
+		}
 	}
-	return ret
 }
 
-// 展开一词多编码
-func flat(entry []string) [][2]string {
-	if len(entry) < 2 {
-		return [][2]string{}
+// 导入拼音数据
+func addPinyinData(py *pinyin.Pinyin, dir string) {
+	paths := []string{
+		"pinyin.txt",
+		"duoyin.txt",
+		"correct.txt",
 	}
-	ret := make([][2]string, 0, len(entry)-1)
-	for i := 1; i < len(entry); i++ {
-		ret = append(ret, [2]string{entry[0], entry[i]})
+	for _, item := range paths {
+		path := filepath.Join(dir, item)
+		py.AddFile(path)
 	}
-	// fmt.Println(entry, ret)
-	return ret
+}
+
+// 追加目录下的所有拼音文件数据
+func appendDir(py *pinyin.Pinyin, dir string) {
+	filepath.Walk(dir, func(path string, info fs.FileInfo, err error) error {
+		if err != nil {
+			fmt.Printf("err: %v\n", err)
+			return err
+		}
+		if !info.IsDir() {
+			py.AddFile(path)
+		}
+		return nil
+	})
 }

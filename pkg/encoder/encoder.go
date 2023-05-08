@@ -24,6 +24,7 @@ func NewEncoder(rules string) *Encoder {
 	return e
 }
 
+// 自动编码
 // pinyin is not required
 func (e *Encoder) Encode(word string, pinyin []string) []string {
 	if word == "" {
@@ -107,7 +108,9 @@ func (e *Encoder) encodeOne(chars []rune, pycode []string, rl rule) []string {
 				return
 			}
 		}
-		tmp = append(tmp, codes)
+		if len(codes) != 0 {
+			tmp = append(tmp, codes)
+		}
 	}
 
 	// 定长规则为空，则为整句规则

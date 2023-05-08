@@ -10,7 +10,7 @@ import (
 	"github.com/nopdan/ku"
 )
 
-// 处理特殊行，引入其他文件，flag 表示是否为辅助生成的码表
+// 处理特殊行，引入其他文件，flag 表示是否为拼音词库
 func include(line, dir string) (*bufio.Scanner, bool, error) {
 	var flag, ok bool
 	if line, ok = strings.CutPrefix(line, "?>>("); ok {

@@ -5,21 +5,22 @@ import (
 	"strings"
 )
 
-// 读取tsv码表
-func HandleText(text, dir string) map[string][]string {
+// 读取 tsv 码表，Char 和 Mapping
+func readMap(text, dir string) map[string][]string {
 	ret := make(map[string][]string)
 	rd := strings.NewReader(text)
 	scan := bufio.NewScanner(rd)
-	handle(scan, ret, dir)
+	_readMap(scan, dir, ret)
 	return ret
 }
 
 // 递归处理
-func handle(scan *bufio.Scanner, ret map[string][]string, dir string) {
+func _readMap(scan *bufio.Scanner, dir string, ret map[string][]string) {
 	for scan.Scan() {
 		line := scan.Text()
+		// 引入其他文件
 		if sc, _, err := include(line, dir); err == nil {
-			handle(sc, ret, dir)
+			_readMap(sc, dir, ret)
 			continue
 		}
 		tmp := strings.Split(line, "\t")
@@ -27,10 +28,10 @@ func handle(scan *bufio.Scanner, ret map[string][]string, dir string) {
 			continue
 		}
 		key := tmp[0]
-		vals := strings.Split(tmp[1], " ")
+		values := strings.Split(tmp[1], " ")
 		if _, ok := ret[key]; !ok {
 			ret[key] = make([]string, 0)
 		}
-		ret[key] = append(ret[key], vals...)
+		ret[key] = append(ret[key], values...)
 	}
 }

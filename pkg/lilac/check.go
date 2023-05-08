@@ -15,53 +15,48 @@ type misMatch struct {
 	Pinyin []string // 自动标注的读音
 }
 
-type Checker struct {
+type checker struct {
 	dict     map[string][]string // 词的所有编码
 	allCodes map[string]string   // 所有出现过的编码
-
-	MisMatch []*misMatch // 不匹配的编码
-	// key: 空码, value: 后续词和编码
-	Empty map[string][]string // 空码
 }
 
-func NewChecker() *Checker {
-	c := new(Checker)
-	c.dict = make(map[string][]string)
-	c.allCodes = make(map[string]string)
-
-	c.MisMatch = make([]*misMatch, 0)
-	c.Empty = make(map[string][]string, 0)
-	return c
+func (c *Config) initChecker() {
+	chk := new(checker)
+	chk.dict = make(map[string][]string)
+	chk.allCodes = make(map[string]string)
+	c.checker = chk
 }
 
 // 校验码表，返回错误编码列表和空码列表
-func (c *Checker) Check(conf *Config) {
-	rd := strings.NewReader(conf.check)
+func (c *Config) Check() {
+	rd := strings.NewReader(c.check)
 	scan := bufio.NewScanner(rd)
+	chk := c.checker
+	enc := c.encoder
 
-	c.read(scan, conf.dir)
-	for word, codes := range c.dict {
-		gen := conf.encoder.Encode(word, []string{})
+	chk.read(scan, c.Dir)
+	for word, codes := range chk.dict {
+		gen := enc.Encode(word, []string{})
 		// 形码方案
-		if conf.encoder.Mapping == nil {
+		if enc.Mapping == nil {
 			if !contains(gen, codes) {
 				c.MisMatch = append(c.MisMatch, &misMatch{word, codes, gen, []string{}})
 			}
 			continue
 		}
-		yin := conf.encoder.Pinyin.Match(word)
+		yin := enc.Pinyin.Match(word)
 		// 编码不匹配，并且拼音长和词长相等
 		if !contains(gen, codes) && utf8.RuneCountInString(word) == len(yin) {
 			c.MisMatch = append(c.MisMatch, &misMatch{word, codes, gen, yin})
 		}
 	}
 	// 空码
-	for code, word := range c.allCodes {
+	for code, word := range chk.allCodes {
 		if len(code) == 1 {
 			continue
 		}
 		pre := code[:len(code)-1] // 去掉最后一码
-		if _, ok := c.allCodes[pre]; !ok {
+		if _, ok := chk.allCodes[pre]; !ok {
 			if _, ok := c.Empty[pre]; !ok {
 				c.Empty[pre] = make([]string, 0)
 			}
@@ -71,11 +66,11 @@ func (c *Checker) Check(conf *Config) {
 }
 
 // ret 词的所有编码
-func (c *Checker) read(scan *bufio.Scanner, dir string) {
+func (chk *checker) read(scan *bufio.Scanner, dir string) {
 	for scan.Scan() {
 		line := scan.Text()
 		if sc, _, err := include(line, dir); err == nil {
-			c.read(sc, dir)
+			chk.read(sc, dir)
 			continue
 		}
 		tmp := strings.Split(line, "\t")
@@ -83,8 +78,8 @@ func (c *Checker) read(scan *bufio.Scanner, dir string) {
 			continue
 		}
 		word, code := tmp[0], tmp[1]
-		if _, ok := c.allCodes[code]; !ok {
-			c.allCodes[code] = word
+		if _, ok := chk.allCodes[code]; !ok {
+			chk.allCodes[code] = word
 		}
 		// 忽略单字
 		if utf8.RuneCountInString(word) == 1 {
@@ -94,10 +89,10 @@ func (c *Checker) read(scan *bufio.Scanner, dir string) {
 		if !ku.IsHan(word) {
 			continue
 		}
-		if _, ok := c.dict[word]; !ok {
-			c.dict[word] = make([]string, 0)
+		if _, ok := chk.dict[word]; !ok {
+			chk.dict[word] = make([]string, 0)
 		}
-		c.dict[word] = append(c.dict[word], code)
+		chk.dict[word] = append(chk.dict[word], code)
 	}
 }
 
