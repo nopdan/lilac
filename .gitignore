@@ -21,4 +21,6 @@
 go.work
 
 test/
-输出/
+*.错码.txt
+*.空码.txt
+*.结果.txt
