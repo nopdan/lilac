@@ -59,7 +59,7 @@ jobs:
           mv pinyin-data/pinyin.txt bin/pinyin-data/
           mv pinyin-data/duoyin.txt bin/pinyin-data/
           mv pinyin-data/correct.txt bin/pinyin-data/
-          mv sample.ini bin/
+          mv 参考.ini bin/
           mv sample/ bin/sample/
 
       # 上传到 Artifact
