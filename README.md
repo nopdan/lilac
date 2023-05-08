@@ -228,4 +228,4 @@ ou	o
 .\lilac.exe path.ini output.txt
 ```
 
-`correct.txt` 也可以修正读音。
+`pinyin-data/correct.txt` 也可以修正读音。

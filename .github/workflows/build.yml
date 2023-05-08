@@ -1,0 +1,69 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # 拉取代码
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      # 安装 go
+      - name: Setup go
+        uses: actions/setup-go@v3
+        with:
+          go-version: '>=1.19.0'
+          check-latest: true
+
+      - name: Setup go cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+            ~/Library/Caches/go-build
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      # 编译
+      - name: Build
+        run: |
+          go mod tidy
+          go env -w GOARCH=amd64
+          echo "编译 windows 版本"
+          go env -w GOOS=windows
+          go build -ldflags="-s -w" -o ./bin/lilac.exe
+
+      # 使用 upx 压缩可执行文件
+      - name: Run UPX
+        uses: crazy-max/ghaction-upx@v2
+        with:
+          version: latest
+          files: |
+            ./bin/*
+          args: -fq
+
+      - run: |
+          mv README.md bin/
+          mv logo.png bin/
+          mv pinyin-data/pinyin.txt bin/pinyin-data/
+          mv pinyin-data/duoyin.txt bin/pinyin-data/
+          mv pinyin-data/correct.txt bin/pinyin-data/
+          mv sample.ini bin/
+          mv sample/ bin/sample/
+
+      # 上传到 Artifact
+      - name: Upload windows
+        uses: actions/upload-artifact@v3
+        with:
+          name: lilac
+          path: ./bin/

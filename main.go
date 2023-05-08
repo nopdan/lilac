@@ -14,9 +14,7 @@ import (
 )
 
 func main() {
-	var input string
-	output := "output.txt"
-
+	var input, output string
 	args := os.Args
 	if len(args) >= 2 {
 		input = args[1]
@@ -24,7 +22,13 @@ func main() {
 	if len(args) >= 3 {
 		output = args[2]
 	}
+	run(input, output)
+}
 
+func run(input, output string) {
+	if output == "" {
+		output = "output.txt"
+	}
 	conf := newConfig(input)
 	dict := conf.Build()
 	lilac.WriteFile(dict, output)
@@ -73,7 +77,6 @@ func newConfig(path string) *lilac.Config {
 	py.AddFile("./pinyin-data/pinyin.txt")
 	py.AddFile("./pinyin-data/duoyin.txt")
 	py.AddFile("./pinyin-data/correct.txt")
-	py.AddFile("correct.txt")
 	// appendDir(py, "data")
 
 	conf := lilac.NewConfig(path, py)
