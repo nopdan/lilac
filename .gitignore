@@ -21,5 +21,4 @@
 go.work
 
 test/
-output.txt
-check.txt
+输出/

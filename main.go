@@ -27,33 +27,42 @@ func main() {
 
 func run(input, output string) {
 	if output == "" {
-		output = "output.txt"
+		output = "输出/结果.txt"
 	}
+	// 创建文件夹
+	dir := filepath.Dir(output)
+	os.MkdirAll(dir, os.ModePerm)
+
 	conf := newConfig(input)
 	dict := conf.Build()
 	lilac.WriteFile(dict, output)
 	fmt.Printf("output: %v\n", output)
 
+	// 错码校验
 	chk := lilac.NewChecker()
 	chk.Check(conf)
 	var buf bytes.Buffer
 	if len(chk.MisMatch) != 0 {
 		buf.WriteString("词条\t编码\t生成的编码\t拼音\n")
 		buf.WriteString("-----------------------------\n")
-	}
-	for _, v := range chk.MisMatch {
-		buf.WriteString(v.Word)
-		buf.WriteByte('\t')
-		buf.WriteString(strings.Join(v.Codes, " "))
-		buf.WriteByte('\t')
-		buf.WriteString(strings.Join(v.Gen, " "))
-		buf.WriteByte('\t')
-		buf.WriteString(strings.Join(v.Pinyin, " "))
-		buf.WriteByte('\n')
+		for _, v := range chk.MisMatch {
+			buf.WriteString(v.Word)
+			buf.WriteByte('\t')
+			buf.WriteString(strings.Join(v.Codes, " "))
+			buf.WriteByte('\t')
+			buf.WriteString(strings.Join(v.Gen, " "))
+			buf.WriteByte('\t')
+			buf.WriteString(strings.Join(v.Pinyin, " "))
+			buf.WriteByte('\n')
+		}
+		os.WriteFile(filepath.Join(dir, "错码校验.txt"), buf.Bytes(), 0666)
+		buf.Reset()
 	}
 
+	// 空码校验
 	if len(chk.Empty) != 0 {
-		buf.WriteString("\n空码\t后续\n")
+		os.MkdirAll(filepath.Dir(output), os.ModePerm)
+		buf.WriteString("空码\t后续\n")
 		buf.WriteString("-----------------------------\n")
 		li := make([][2]string, 0, len(chk.Empty))
 		for pre, entries := range chk.Empty {
@@ -68,8 +77,8 @@ func run(input, output string) {
 			buf.WriteString(li[i][1])
 			buf.WriteByte('\n')
 		}
+		os.WriteFile(filepath.Join(dir, "空码校验.txt"), buf.Bytes(), 0666)
 	}
-	os.WriteFile("check.txt", buf.Bytes(), 0666)
 }
 
 func newConfig(path string) *lilac.Config {
