@@ -55,6 +55,7 @@ jobs:
       - run: |
           mv README.md bin/
           mv logo.png bin/
+          mkdir bin/pinyin-data/
           mv pinyin-data/pinyin.txt bin/pinyin-data/
           mv pinyin-data/duoyin.txt bin/pinyin-data/
           mv pinyin-data/correct.txt bin/pinyin-data/
