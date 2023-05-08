@@ -73,6 +73,7 @@ func NewConfig(path string, pydata string) *Config {
 		enc.Mapping = m.NewMapping(data)
 		addPinyinData(py, pydata)
 	}
+	enc.Pinyin = py
 	c.encoder = enc
 
 	c.Result = make([][2]string, 0)
