@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/flowerime/lilac/pkg/lilac"
@@ -50,10 +51,17 @@ func main() {
 	if len(chk.Empty) != 0 {
 		buf.WriteString("\n空码\t后续\n")
 		buf.WriteString("-----------------------------\n")
+		li := make([][2]string, 0, len(chk.Empty))
 		for pre, entries := range chk.Empty {
-			buf.WriteString(pre)
+			li = append(li, [2]string{pre, strings.Join(entries, " ")})
+		}
+		sort.Slice(li, func(i, j int) bool {
+			return li[i][0] < li[j][0]
+		})
+		for i := range li {
+			buf.WriteString(li[i][0])
 			buf.WriteByte('\t')
-			buf.WriteString(strings.Join(entries, " "))
+			buf.WriteString(li[i][1])
 			buf.WriteByte('\n')
 		}
 	}
