@@ -29,10 +29,14 @@ func main() {
 	lilac.WriteFile(dict, output)
 	fmt.Printf("output: %v\n", output)
 
-	check := conf.Check()
+	chk := lilac.NewChecker()
+	chk.Check(conf)
 	var buf bytes.Buffer
-	buf.WriteString("词条\t编码\t生成的编码\t拼音")
-	for _, v := range check {
+	if len(chk.MisMatch) != 0 {
+		buf.WriteString("词条\t编码\t生成的编码\t拼音\n")
+		buf.WriteString("-----------------------------\n")
+	}
+	for _, v := range chk.MisMatch {
 		buf.WriteString(v.Word)
 		buf.WriteByte('\t')
 		buf.WriteString(strings.Join(v.Codes, " "))
@@ -41,6 +45,17 @@ func main() {
 		buf.WriteByte('\t')
 		buf.WriteString(strings.Join(v.Pinyin, " "))
 		buf.WriteByte('\n')
+	}
+
+	if len(chk.Empty) != 0 {
+		buf.WriteString("\n空码\t后续\n")
+		buf.WriteString("-----------------------------\n")
+		for pre, entries := range chk.Empty {
+			buf.WriteString(pre)
+			buf.WriteByte('\t')
+			buf.WriteString(strings.Join(entries, " "))
+			buf.WriteByte('\n')
+		}
 	}
 	os.WriteFile("check.txt", buf.Bytes(), 0666)
 }
