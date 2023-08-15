@@ -8,9 +8,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/flowerime/lilac/pkg/encoder"
-	m "github.com/flowerime/lilac/pkg/mapping"
-	"github.com/flowerime/pinyin"
+	"github.com/nopdan/lilac/pkg/encoder"
+	m "github.com/nopdan/lilac/pkg/mapping"
+	"github.com/nopdan/pinyin"
 	"gopkg.in/ini.v1"
 )
 

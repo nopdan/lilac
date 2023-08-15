@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	m "github.com/flowerime/lilac/pkg/mapping"
-	"github.com/flowerime/pinyin"
 	"github.com/nopdan/ku"
+	m "github.com/nopdan/lilac/pkg/mapping"
+	"github.com/nopdan/pinyin"
 )
 
 type Encoder struct {

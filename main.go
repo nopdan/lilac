@@ -5,8 +5,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/flowerime/lilac/pkg/lilac"
 	"github.com/nopdan/ku"
+	"github.com/nopdan/lilac/pkg/lilac"
 )
 
 func main() {

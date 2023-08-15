@@ -4,13 +4,13 @@
 
 ### 丁香码表生成器
 
-[![GitHub Repo stars](https://img.shields.io/github/stars/flowerime/lilac)](https://github.com/flowerime/lilac/stargazers)
-[![GitHub forks](https://img.shields.io/github/forks/flowerime/lilac)](https://github.com/flowerime/lilac/network/members)
-![GitHub repo size](https://img.shields.io/github/repo-size/flowerime/lilac)
-![GitHub](https://img.shields.io/github/license/flowerime/lilac)
+[![GitHub Repo stars](https://img.shields.io/github/stars/nopdan/lilac)](https://github.com/nopdan/lilac/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/nopdan/lilac)](https://github.com/nopdan/lilac/network/members)
+![GitHub repo size](https://img.shields.io/github/repo-size/nopdan/lilac)
+![GitHub](https://img.shields.io/github/license/nopdan/lilac)
 
-<!-- [![GitHub release (latest by date)](https://img.shields.io/github/v/release/flowerime/lilac)](https://github.com/flowerime/lilac/releases) -->
-<!-- [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/flowerime/lilac/build.yml)](https://github.com/flowerime/lilac/actions/workflows/build.yml) -->
+<!-- [![GitHub release (latest by date)](https://img.shields.io/github/v/release/nopdan/lilac)](https://github.com/nopdan/lilac/releases) -->
+<!-- [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/nopdan/lilac/build.yml)](https://github.com/nopdan/lilac/actions/workflows/build.yml) -->
 
 </div>
 
